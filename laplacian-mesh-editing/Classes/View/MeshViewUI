@@ -1,0 +1,58 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0303 
+header_name {.h} 
+code_name {.cxx}
+class MeshViewUI {open
+} {
+  Function {MeshViewUI()} {open
+  } {
+    Fl_Window mContainer {open
+      xywh {-32000 -32000 924 684} type Double hide
+    } {
+      Fl_Group mFl_Group {open
+        xywh {15 15 895 665}
+      } {
+        Fl_Group VChange {open
+          xywh {15 20 305 650}
+        } {
+          Fl_Roller vrot {
+            xywh {15 70 25 600}
+          }
+          Fl_Slider ypan {
+            xywh {45 70 20 600}
+          }
+        }
+        Fl_Group HChange {open
+          xywh {40 15 845 360}
+        } {
+          Fl_Slider xpan {
+            xywh {115 50 770 25} type Horizontal hotspot
+          }
+          Fl_Roller hrot {
+            xywh {115 15 770 25} type Horizontal
+          }
+        }
+        Fl_Group MainView {open
+          xywh {40 40 865 640}
+        } {
+          Fl_Box meshView {
+            xywh {90 92 795 546} color 68
+            code0 {\#include "MeshView.h"}
+            class MeshView
+          }
+        }
+        Fl_Value_Slider zoomSlider {
+          label Zoom
+          callback {meshView->setControlSize(o->value());
+meshView->redraw();}
+          xywh {60 645 850 25} type Horizontal minimum 1 maximum 3 value 1 textsize 14
+        }
+      }
+    }
+  }
+  Function {show()} {
+    comment {show the window} open
+  } {
+    code {mContainer->show();} {}
+  }
+} 
