@@ -6,3 +6,5 @@ Debug/
 *.bmp
 *.
 Eigen/
+lib/
+tmp.txt

@@ -28,7 +28,7 @@ void MeshView::draw()
 	if(mMesh == NULL)
 	{
 		int ret;
-		ObjEntity* mesh = ObjUtility::createObjEntity("tiger.obj",ret);
+		ObjEntity* mesh = ObjUtility::createObjEntity("q2.obj",ret);
 		Size3D size = mesh->getSize();
 		double m = max(max(size.x,size.y),max(size.x,size.z));
 		mScale = 15.0/m;

@@ -26,7 +26,7 @@ private:
 
 	static const int STATE_MOVING_HANDLE = 0X02;
 
-	int mState;
+	int mState;	
 
 	Eigen::MatrixXd adjacentMatrix;
 
@@ -35,7 +35,14 @@ private:
 
 	Eigen::MatrixXd A_prime;
 
+	int mMeshVertexCount;
+
 	void initAdjacentMatrix();
 
-	int mMeshVertexCount;
+	/* 只在initAdjacentMatrix()里调用 */
+	void _initDegreeMatrix();
+
+	void constructMatrix(const Vertex* v, Eigen::Matrix<double,3,7>& m);
+
+	void getAdjVertex(int v, vector<int>& adj);	
 };
