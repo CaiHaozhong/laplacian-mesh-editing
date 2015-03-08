@@ -11,9 +11,19 @@ public:
 	MeshProcessor();
 	~MeshProcessor();
 
-	void mouseClick(int x, int y)
+	void mousePush(int button, int x, int y)
 	{
-		mOperator->mouseClick(x,y);
+		mOperator->mousePush(button,x,y);
+	}
+
+	void mouseRelease(int button, int x, int y)
+	{
+		mOperator->mouseRelease(button,x,y);
+	}
+
+	void mouseDrag(int button, int x, int y)
+	{
+		mOperator->mouseDrag(button,x,y);
 	}
 
 	void buttonPush(int funcName)

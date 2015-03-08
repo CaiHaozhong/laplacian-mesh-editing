@@ -4,23 +4,36 @@
 #include <math.h>
 #include "ObjUtility.h"
 #include "HalfEdgeEntity.h"
+#include <fstream>
+void print(double m[16],ofstream& o)
+{
+	for (int i = 0; i < 4; i++)
+	{
+		for (int j = 0; j < 4; j++)
+		{
+			o << m[j*4+i] << ' ';
+		}
+		o << endl;
+	}
+	o << endl;
+}
 // #define PI 3.14159
 // #define DegreeToRadius(d) ((PI/180.0)*d)
 // #define RadiusToDegree(r) ((180.0/PI)*r)
+
 MeshView::MeshView(int x,int y,int w,int h,const char *l)
             : Fl_Gl_Window(x,y,w,h,l)
 {
-//     yAng = 0.0;
-//     xAng = 0.0;
-// 	zAng = 0.0;
-    mControlSize = 1.0;
-    xshift = yshift = 0;
+
+    mControlSize = 1.0;    
 	mMesh = NULL;	
 	mRotateMatrix[0] = 1; mRotateMatrix[4] = 0; mRotateMatrix[8] = 0; mRotateMatrix[12] = 0;
 	mRotateMatrix[1] = 0; mRotateMatrix[5] = 1; mRotateMatrix[9] = 0; mRotateMatrix[13] = 0;
 	mRotateMatrix[2] = 0; mRotateMatrix[6] = 0; mRotateMatrix[10] = 1; mRotateMatrix[14] = 0;
 	mRotateMatrix[3] = 0; mRotateMatrix[7] = 0; mRotateMatrix[11] = 0; mRotateMatrix[15] = 1;
 
+	mDragType = DRAG_VIEW;
+	mMeshProcessor = nullptr;
 }
 
 void MeshView::draw() 
@@ -28,7 +41,7 @@ void MeshView::draw()
 	if(mMesh == NULL)
 	{
 		int ret;
-		ObjEntity* mesh = ObjUtility::createObjEntity("q2.obj",ret);
+		ObjEntity* mesh = ObjUtility::createObjEntity("defo.obj",ret);
 		Size3D size = mesh->getSize();
 		double m = max(max(size.x,size.y),max(size.x,size.z));
 		mScale = 15.0/m;
@@ -74,6 +87,16 @@ void MeshView::draw()
 	//glTranslatef(1,2, 0);
 	
 	glGetDoublev(GL_MODELVIEW_MATRIX,Utility::modelViewMatrix);
+// 	double modelViewMatrix[16];
+// 	double projMatrix[16];
+// 	double viewPort[4];
+// 	glGetDoublev(GL_MODELVIEW_MATRIX,modelViewMatrix);
+// 	glGetDoublev(GL_PROJECTION_MATRIX,projMatrix);
+// 	glGetDoublev(GL_VIEWPORT,viewPort);
+// 	ofstream o("tmp.txt",ios::app);
+// 	print(modelViewMatrix,o);
+// 	print(projMatrix,o);
+// 	o.close();
 
     //drawMesh();
 	if(mMeshDrawer)
@@ -93,13 +116,19 @@ int MeshView::handle( int event )
 		switch(event) 
 		{
 		case FL_RELEASE:
+			printf("pos:%d,%d\n",Fl::event_x(),Fl::event_y());
 			if(mIsDrag == true)
-				mTrackball.storeLastRotation();
+			{
+				if(mDragType == DRAG_VIEW)
+					mTrackball.storeLastRotation();
+			}
 			if(mIsDrag == false)
 			{
-				((HalfEdgeEntity*)mMesh)->handleMousePoint(Vector2D(Fl::event_x(),this->h()-Fl::event_y()));
-				redraw();
+				//((HalfEdgeEntity*)mMesh)->handleMousePoint(Vector2D(Fl::event_x(),this->h()-Fl::event_y()));
+				//redraw();
 			}
+			if(mMeshProcessor)
+				mMeshProcessor->mouseRelease(Fl::event_button(),Fl::event_x(),this->h()-Fl::event_y());
 			break;
 		case FL_PUSH:
 			mIsDrag = false;
@@ -107,23 +136,23 @@ int MeshView::handle( int event )
 			//glGetDoublev(GL_MODELVIEW_MATRIX,m);
 			startMouseX = Fl::event_x()-this->w()/2;
 			startMouseY = this->h()/2-Fl::event_y();
+			if(mMeshProcessor)
+				mMeshProcessor->mousePush(Fl::event_button(),Fl::event_x(),this->h()-Fl::event_y());
 			break;
 		case FL_DRAG:
 			mIsDrag = true;
-			int endMouseX = Fl::event_x()-this->w()/2;
-			int endMouseY = this->h()/2-Fl::event_y();
-
-			mTrackball.getRotateMatrix(startMouseX,startMouseY,endMouseX,endMouseY,mRotateMatrix);
-			/*xAng += (-(y-startMouseY)*abs(cos(DegreeToRadius(yAng))) + (x-startMouseX)*abs(cos(DegreeToRadius(xAng))*sin(DegreeToRadius(zAng))));
-			yAng += (-(x-startMouseX)*abs(cos(DegreeToRadius(xAng))*cos(DegreeToRadius(zAng))) - (y-startMouseY)*abs(cos(DegreeToRadius(yAng))*sin(DegreeToRadius(zAng))));
-			zAng += (-(y-startMouseY)*abs(sin(DegreeToRadius(yAng))) + (x-startMouseX)*abs(sin(DegreeToRadius(xAng))));
-			*/
-			//zAng += 10;
-			//startMouseX = endMouseX;
-			//startMouseY = endMouseY;
-			redraw();
-			//printf("x:%d\ny:%d\n",endMouseX,endMouseY);
-
+			if(mDragType == DRAG_VIEW)
+			{				
+				int endMouseX = Fl::event_x()-this->w()/2;
+				int endMouseY = this->h()/2-Fl::event_y();
+				mTrackball.getRotateMatrix(startMouseX,startMouseY,endMouseX,endMouseY,mRotateMatrix);
+				redraw();				
+			}
+			else if(mDragType == DRAG_EDIT)
+			{
+				if(mMeshProcessor)
+					mMeshProcessor->mouseDrag(Fl::event_button(),Fl::event_x(),this->h()-Fl::event_y());
+			}
 			break;
 		}
 	

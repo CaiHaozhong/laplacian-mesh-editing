@@ -7,36 +7,16 @@ class MeshViewUI {open
   Function {MeshViewUI()} {open
   } {
     Fl_Window mContainer {open
-      xywh {-32000 -32000 924 684} type Double hide
+      xywh {147 59 917 688} type Double visible
     } {
       Fl_Group mFl_Group {open
         xywh {15 15 895 665}
       } {
-        Fl_Group VChange {open
-          xywh {15 20 305 650}
-        } {
-          Fl_Roller vrot {
-            xywh {15 70 25 600}
-          }
-          Fl_Slider ypan {
-            xywh {45 70 20 600}
-          }
-        }
-        Fl_Group HChange {open
-          xywh {40 15 845 360}
-        } {
-          Fl_Slider xpan {
-            xywh {115 50 770 25} type Horizontal hotspot
-          }
-          Fl_Roller hrot {
-            xywh {115 15 770 25} type Horizontal
-          }
-        }
         Fl_Group MainView {open
-          xywh {40 40 865 640}
+          xywh {15 40 890 640}
         } {
           Fl_Box meshView {
-            xywh {90 92 795 546} color 68
+            xywh {15 84 890 550} color 68
             code0 {\#include "MeshView.h"}
             class MeshView
           }
@@ -45,7 +25,35 @@ class MeshViewUI {open
           label Zoom
           callback {meshView->setControlSize(o->value());
 meshView->redraw();}
-          xywh {60 645 850 25} type Horizontal minimum 1 maximum 3 value 1 textsize 14
+          xywh {15 645 895 20} type Horizontal minimum 1 maximum 3 value 1 textsize 14
+        }
+      }
+      Fl_Menu_Bar {} {open
+        xywh {0 0 916 20}
+      } {
+        Submenu {} {
+          label {文件} open
+          xywh {0 0 62 20}
+        } {
+          MenuItem {} {
+            label {退出(Quit)}
+            xywh {0 0 30 20}
+          }
+        }
+      }
+      Fl_Group {} {
+        label Drag open
+        xywh {10 45 150 35} box FLAT_BOX
+      } {
+        Fl_Round_Button {} {
+          label Edit
+          callback {meshView->setDragType(MeshView::DRAG_EDIT);}
+          xywh {100 50 60 30} type Radio down_box ROUND_DOWN_BOX
+        }
+        Fl_Round_Button {} {
+          label View
+          callback {meshView->setDragType(MeshView::DRAG_VIEW);} selected
+          xywh {25 50 75 30} type Radio down_box ROUND_DOWN_BOX value 1
         }
       }
     }

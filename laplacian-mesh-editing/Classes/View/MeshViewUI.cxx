@@ -3,36 +3,40 @@
 #include "MeshViewUI.h"
 
 void MeshViewUI::cb_zoomSlider_i(Fl_Value_Slider* o, void*) {
-	meshView->setControlSize(o->value());
-	meshView->redraw();
+  meshView->setControlSize(o->value());
+meshView->redraw();
 }
 void MeshViewUI::cb_zoomSlider(Fl_Value_Slider* o, void* v) {
   ((MeshViewUI*)(o->parent()->parent()->user_data()))->cb_zoomSlider_i(o,v);
 }
 
+Fl_Menu_Item MeshViewUI::menu_[] = {
+ {"\346\226\207\344\273\266", 0,  0, 0, 64, FL_NORMAL_LABEL, 0, 14, 0},
+ {"\351\200\200\345\207\272(Quit)", 0,  0, 0, 0, FL_NORMAL_LABEL, 0, 14, 0},
+ {0,0,0,0,0,0,0,0,0},
+ {0,0,0,0,0,0,0,0,0}
+};
+
+void MeshViewUI::cb_Edit_i(Fl_Round_Button*, void*) {
+  meshView->setDragType(MeshView::DRAG_EDIT);
+}
+void MeshViewUI::cb_Edit(Fl_Round_Button* o, void* v) {
+  ((MeshViewUI*)(o->parent()->parent()->user_data()))->cb_Edit_i(o,v);
+}
+
+void MeshViewUI::cb_View_i(Fl_Round_Button*, void*) {
+  meshView->setDragType(MeshView::DRAG_VIEW);
+}
+void MeshViewUI::cb_View(Fl_Round_Button* o, void* v) {
+  ((MeshViewUI*)(o->parent()->parent()->user_data()))->cb_View_i(o,v);
+}
+
 MeshViewUI::MeshViewUI() {
-  { mContainer = new Fl_Double_Window(924, 684);
+  { mContainer = new Fl_Double_Window(917, 688);
     mContainer->user_data((void*)(this));
     { mFl_Group = new Fl_Group(15, 15, 895, 665);
-      { VChange = new Fl_Group(15, 20, 305, 650);
-        { vrot = new Fl_Roller(15, 70, 25, 600);
-        } // Fl_Roller* vrot
-        { ypan = new Fl_Slider(45, 70, 20, 600);
-        } // Fl_Slider* ypan
-        VChange->end();
-      } // Fl_Group* VChange
-      { HChange = new Fl_Group(40, 15, 845, 360);
-        { xpan = new Fl_Slider(115, 50, 770, 25);
-          xpan->type(1);
-          xpan->window()->hotspot(xpan);
-        } // Fl_Slider* xpan
-        { hrot = new Fl_Roller(115, 15, 770, 25);
-          hrot->type(1);
-        } // Fl_Roller* hrot
-        HChange->end();
-      } // Fl_Group* HChange
-      { MainView = new Fl_Group(40, 40, 865, 640);
-        { meshView = new MeshView(90, 92, 795, 546);
+      { MainView = new Fl_Group(15, 40, 890, 640);
+        { meshView = new MeshView(15, 84, 890, 550);
           meshView->box(FL_NO_BOX);
           meshView->color((Fl_Color)68);
           meshView->selection_color(FL_BACKGROUND_COLOR);
@@ -45,7 +49,7 @@ MeshViewUI::MeshViewUI() {
         } // MeshView* meshView
         MainView->end();
       } // Fl_Group* MainView
-      { zoomSlider = new Fl_Value_Slider(60, 645, 850, 25, "Zoom");
+      { zoomSlider = new Fl_Value_Slider(15, 645, 895, 20, "Zoom");
         zoomSlider->type(1);
         zoomSlider->minimum(1);
         zoomSlider->maximum(3);
@@ -55,6 +59,24 @@ MeshViewUI::MeshViewUI() {
       } // Fl_Value_Slider* zoomSlider
       mFl_Group->end();
     } // Fl_Group* mFl_Group
+    { Fl_Menu_Bar* o = new Fl_Menu_Bar(0, 0, 916, 20);
+      o->menu(menu_);
+    } // Fl_Menu_Bar* o
+    { Fl_Group* o = new Fl_Group(10, 45, 150, 35, "Drag");
+      o->box(FL_FLAT_BOX);
+      { Fl_Round_Button* o = new Fl_Round_Button(100, 50, 60, 30, "Edit");
+        o->type(102);
+        o->down_box(FL_ROUND_DOWN_BOX);
+        o->callback((Fl_Callback*)cb_Edit);
+      } // Fl_Round_Button* o
+      { Fl_Round_Button* o = new Fl_Round_Button(25, 50, 75, 30, "View");
+        o->type(102);
+        o->down_box(FL_ROUND_DOWN_BOX);
+        o->value(1);
+        o->callback((Fl_Callback*)cb_View);
+      } // Fl_Round_Button* o
+      o->end();
+    } // Fl_Group* o
     mContainer->end();
   } // Fl_Double_Window* mContainer
 }

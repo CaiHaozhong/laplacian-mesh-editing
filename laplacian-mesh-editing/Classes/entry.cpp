@@ -7,24 +7,41 @@
 using namespace Eigen; 
 #pragma comment(lib,"fltkd.lib")
 #pragma comment(lib,"fltkgld.lib")
+//#define TEST 1
+#define LAP_TEST 2
+//#define RUNAPP 3
 int main()
-{
-	
-	
-	int ret;
+{	
+#ifdef TEST
+	Eigen::SparseMatrix<double,Eigen::RowMajor> A(10,10);
+	for (int i = 0; i < 10; i++)
+	{
+		A.insert(i,1) = (i+1);
+		A.insert(i,3) = (i+1)*(i+1);
+		A.insert(i,5) = (i+1)*(i+1)*(i+1);
+	}
+	cout << A << endl << endl;	
 
-	Eigen::MatrixXd A(3,3);
-	Eigen::MatrixXd B(3,9);
-	A<< 1, 2, 3,     // Initialize A. The elements can also be
-		4, 5, 6,     // matrices, which are stacked along cols
-		7, 8, 9;     // and then the rows are stacked.
-	B << A, A, A;
-	cout << A << endl << endl;
-	cout << B;
-	new LaplacianOperator(ObjUtility::createObjEntity("q2.obj",ret));
+	for (Eigen::SparseMatrix<double,Eigen::RowMajor>::InnerIterator it(A,1); it; it++)
+	{
+		cout << "it.value():" << it.value() << endl;
+		cout << it.row() << endl;
+		cout << it.col() << endl;
+		cout << "--------------------" << endl;
+	}
+
+	system("pause");
+#endif
+
+#ifdef LAP_TEST
+	int ret;
+	new LaplacianOperator(ObjUtility::createObjEntity("q3.obj",ret));
+#endif
+
+#ifdef RUNAPP
 	MeshViewUI* meshView = new MeshViewUI;
 	meshView->show();
 	Fl::run();
-	//system("pause");
 	return 0;
+#endif	
 }

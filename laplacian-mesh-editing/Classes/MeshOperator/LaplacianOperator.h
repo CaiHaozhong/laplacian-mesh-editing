@@ -2,6 +2,7 @@
 #include "OperatorImpl.h"
 #include "ObjEntity.h"
 #include "Eigen/Dense"
+#include "Eigen/Sparse"
 class LaplacianOperator : public OperatorImpl
 {
 public:
@@ -10,17 +11,17 @@ public:
 	static const int FUNC_CHOOSE_STATIC = 0X02;
 
 	static const int FUNC_MOVE_HANDLE = 0X04;
-	
+
 	LaplacianOperator(ObjEntity* mesh);
 
 	LaplacianOperator();
 	~LaplacianOperator();
 
-	virtual void mouseClick( int x, int y );
+
 
 	virtual void callFunction( int funcName );
 
-	
+
 private:
 	static const int STATE_CHOOSING_STATIC = 0X01;
 
@@ -28,10 +29,10 @@ private:
 
 	int mState;	
 
-	Eigen::MatrixXd adjacentMatrix;
+	Eigen::SparseMatrix<double,Eigen::RowMajor> adjacentMatrix;
 
 	/* 每个顶点的度数 */
-	Eigen::MatrixXd degreeMatrix;
+	Eigen::VectorXd degreeMatrix;
 
 	Eigen::MatrixXd A_prime;
 
@@ -39,10 +40,16 @@ private:
 
 	void initAdjacentMatrix();
 
-	/* 只在initAdjacentMatrix()里调用 */
-	void _initDegreeMatrix();
+	void computeLaplacianOperator(Eigen::SparseMatrix<double,Eigen::RowMajor>& laplacianOperator);
 
 	void constructMatrix(const Vertex* v, Eigen::Matrix<double,3,7>& m);
 
 	void getAdjVertex(int v, vector<int>& adj);	
+
+	virtual void mousePush( int button, int x, int y );
+
+	virtual void mouseRelease( int button, int x, int y );
+
+	virtual void mouseDrag( int button, int x, int y );
+
 };

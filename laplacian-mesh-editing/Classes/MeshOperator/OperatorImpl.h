@@ -8,7 +8,11 @@ public:
 	~OperatorImpl();
 	
 	/* x,y are in OpenGL Coordinate */
-	virtual void mouseClick(int x, int y) = 0;
+	virtual void mousePush(int button, int x, int y) = 0;
+
+	virtual void mouseRelease(int button, int x, int y) = 0;
+
+	virtual void mouseDrag(int button, int x, int y) = 0;
 
 	virtual void callFunction(int funcName) = 0;
 
