@@ -1,3 +1,4 @@
+Release/
 Debug/
 *.sdf
 *.v11.suo
@@ -8,3 +9,6 @@ Debug/
 Eigen/
 lib/
 tmp.txt
+unsupported/
+*.txt
+*.rar

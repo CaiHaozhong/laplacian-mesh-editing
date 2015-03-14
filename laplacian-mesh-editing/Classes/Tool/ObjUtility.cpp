@@ -16,6 +16,10 @@ ObjUtility::~ObjUtility()
 
 ObjEntity* ObjUtility::createObjEntity(const char* filename , int& ret)
 {
+#ifdef MY_DEBUG
+	ofstream output("debug.txt",ios::app);
+#endif // MY_DEBUG
+
 	ret = ReturnType::SUCCESS;
 
 	vector<Vertex*> *m_vertexList = new vector<Vertex*>;
@@ -31,8 +35,10 @@ ObjEntity* ObjUtility::createObjEntity(const char* filename , int& ret)
 		return NULL;
 	}
 	char key[80];	
+	int i = 0;
 	while(Input >> key)
 	{
+		i ++;
 		if(ISEQUAL(key,"#"))
 			Input.ignore(1024,'\n');//ºöÂÔÒ»ÐÐ
 		else if(ISEQUAL(key, "mtllib"))
@@ -60,6 +66,12 @@ ObjEntity* ObjUtility::createObjEntity(const char* filename , int& ret)
 			Input >> x >> y >> z;
 			Vertex* v = new Vertex(x,y,z);
 			m_vertexList->push_back(v);
+#ifdef MY_DEBUG
+		if(y < 1.6886099999999999)	
+			output << i << " " << x << ' ' << y << ' ' << z << endl;
+#endif // MY_DEBUG
+			
+				
 			
 		}
 		else if(ISEQUAL(key,"vn"))
@@ -95,11 +107,23 @@ ObjEntity* ObjUtility::createObjEntity(const char* filename , int& ret)
 				f->v.push_back(vIndex);
 				f->vt.push_back(vtIndex);
 				f->vn.push_back(vnIndex);
+#ifdef MY_DEBUG
+				if(vIndex == 283)
+					output << "f:" << i << endl;
+				if(vIndex == 284)
+					output << "f:" << i << endl;
+				if(vIndex == 2380)
+					output << "f:" << i << endl;
+#endif // MY_DEBUG
+
 			}
 			m_faceList->push_back(f);
 		}
 	}
 	Input.close();
+#ifdef MY_DEBUG
+	output.close();
+#endif // MY_DEBUG
 	return createObjEntity(m_vertexList, m_textureCoordinateList, m_normalVectorList, m_faceList, materialDataManager );
 }
 

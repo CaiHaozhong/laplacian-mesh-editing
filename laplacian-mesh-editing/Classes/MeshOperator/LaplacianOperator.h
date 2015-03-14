@@ -29,7 +29,7 @@ private:
 
 	int mState;	
 
-	Eigen::SparseMatrix<double,Eigen::RowMajor> adjacentMatrix;
+	Eigen::SparseMatrix<double> adjacentMatrix;
 
 	/* 每个顶点的度数 */
 	Eigen::VectorXd degreeMatrix;
@@ -40,7 +40,7 @@ private:
 
 	void initAdjacentMatrix();
 
-	void computeLaplacianOperator(Eigen::SparseMatrix<double,Eigen::RowMajor>& laplacianOperator);
+	void computeLaplacianOperator(Eigen::SparseMatrix<double>& laplacianOperator);
 
 	void constructMatrix(const Vertex* v, Eigen::Matrix<double,3,7>& m);
 
@@ -52,4 +52,7 @@ private:
 
 	virtual void mouseDrag( int button, int x, int y );
 
+	ObjEntity* defoMesh;
+
+	void writeToDisk(Eigen::VectorXd& v_p);
 };

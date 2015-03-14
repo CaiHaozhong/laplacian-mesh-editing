@@ -41,7 +41,7 @@ void MeshView::draw()
 	if(mMesh == NULL)
 	{
 		int ret;
-		ObjEntity* mesh = ObjUtility::createObjEntity("defo.obj",ret);
+		ObjEntity* mesh = ObjUtility::createObjEntity("result.obj",ret);
 		Size3D size = mesh->getSize();
 		double m = max(max(size.x,size.y),max(size.x,size.z));
 		mScale = 15.0/m;
@@ -49,7 +49,7 @@ void MeshView::draw()
 		this->setMesh(mesh);
 		ObjDrawerPrimitive *drawer = new ObjDrawerPrimitive(mMesh);
 		drawer->setPointColor(Color3f(1.0f,0,0));
-		drawer->setPointSize(5.0f);
+		drawer->setPointSize(2.0f);
 		mMeshDrawer = drawer;
 	}
 

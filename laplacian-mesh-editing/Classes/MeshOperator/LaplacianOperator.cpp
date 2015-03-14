@@ -2,14 +2,18 @@
 #include <iostream>
 #include <fstream>
 #include <Eigen/Sparse>
+#include <Eigen/SparseCholesky>
+#include <Eigen/Eigenvalues>
+#include <time.h>
+#include "ObjUtility.h"
 typedef Eigen::Triplet<double> T;
-#define MY_DEBUG
 #define PRINT 1
+#undef MY_DEBUG
 void printLine(ofstream& outPut)
 {
-	outPut << "-----------------------------------------------------------------------" << endl;
+	outPut << "-----------------------------------------------------------------------" << endl;	
 }
-void printMatrix(Eigen::MatrixXd m, char* name)
+void printMatrix(Eigen::VectorXd& m, char* name)
 {
 #ifdef PRINT
 	ofstream outPut("tmp.txt",ios::app);
@@ -26,32 +30,50 @@ LaplacianOperator::LaplacianOperator():mState(STATE_CHOOSING_STATIC)
 LaplacianOperator::LaplacianOperator( ObjEntity* mesh ):mState(STATE_CHOOSING_STATIC),OperatorImpl(mesh)
 {	
 	assert(mesh != nullptr);
-
+	clock_t clock_start;
+	clock_start = clock();
 	mMeshVertexCount = mesh->getVertexCount();	
 	initAdjacentMatrix();	
 //	printMatrix(adjacentMatrix,"adjacentMatrix");
 //	printMatrix(degreeMatrix,"degreeMatrix");
 
-	Eigen::SparseMatrix<double,Eigen::RowMajor> laplacianOperator;
+	Eigen::SparseMatrix<double> laplacianOperator;
 	computeLaplacianOperator(laplacianOperator);
+#ifdef MY_DEBUG
+	ofstream out("debug.txt",ios::app);
+	out << "laplacianOperator:";
+	for (Eigen::SparseMatrix<double>::InnerIterator it(laplacianOperator,283); it; it++)
+	{		
+		out << it.row() << ' ';
+	}
+	out << endl;
+	
+#endif // MY_DEBUG
 
-	printMatrix(laplacianOperator,"laplacianOperator");
-	Eigen::Matrix<double,Eigen::Dynamic,3,Eigen::RowMajor> verInput(mMeshVertexCount,3);	
+
+	//printMatrix(laplacianOperator,"laplacianOperator");
+	Eigen::Matrix<double,Eigen::Dynamic,3> verInput(mMeshVertexCount,3);	
 	for (int i = 0; i < mMeshVertexCount; i++)
 	{
 		Vertex* v = mesh->m_vertexList->at(i);
 		verInput(i,0) = v->x; verInput(i,1) = v->y; verInput(i,2) = v->z;
 	}
 	
-	Eigen::Matrix<double,Eigen::Dynamic,3,Eigen::RowMajor> deltaInput = laplacianOperator * verInput;
-	printMatrix(deltaInput,"deltaInput");
-	Eigen::SparseMatrix<double,Eigen::RowMajor> laplacianOperator3D(3*mMeshVertexCount,3*mMeshVertexCount);	
+	Eigen::Matrix<double,Eigen::Dynamic,3> deltaInput = laplacianOperator * verInput;
+#ifdef MY_DEBUG
+	out << "verInput 283:" << verInput(283,0) << ' ' << verInput(283,1) << ' ' << verInput(283,2) << endl;
+	out << "deltaInput 283:" << deltaInput(283,0) << ' ' << deltaInput(283,1) << ' ' << deltaInput(283,2) << endl;	
+#endif // MY_DEBUG
 
-
+	//printMatrix(deltaInput,"deltaInput");
+	Eigen::SparseMatrix<double> laplacianOperator3D(6*mMeshVertexCount,3*mMeshVertexCount);	
+	laplacianOperator3D.reserve(Eigen::VectorXi::Constant(3*mMeshVertexCount,40));
+	//Eigen::MatrixXd laplacianOperator(laplacianOperator);
 	vector<Vertex*>* meshVertex = mesh->m_vertexList;
 	/* operate laplacianOperator3D */
 	for (int i = 0; i < mMeshVertexCount; i++)
 	{
+		//printf("%d ",i);
 		/* Generate Matrix A*/
 		Vertex* v = meshVertex->at(i);
 		vector<Vertex*> vertexInA;
@@ -71,14 +93,31 @@ LaplacianOperator::LaplacianOperator( ObjEntity* mesh ):mState(STATE_CHOOSING_ST
 			constructMatrix(vertexInA.at(j),m);
 			int r = matrixA.rows();			
 			matrixA.middleRows<3>(j*3) = m;
-//			printMatrix(m,"m");			
+//			printMatrix(m,"m");
+		}		
+		Eigen::Matrix<double,7,Eigen::Dynamic> pinvA;
+
+		/* 当该顶点是孤立的的时候，transposeA*matrixA可能是奇异的，因此pinv就会出现-1.#IND*/
+		if(adjIndex.size() == 0)
+		{
+			pinvA.resize(7,3);
+			pinvA.setZero();
 		}
-		
-		/* pinv */
-		Eigen::Matrix<double,7,Eigen::Dynamic> transposeA = matrixA.transpose();
-		Eigen::Matrix<double,7,Eigen::Dynamic> pinvA = (transposeA * matrixA).inverse()*transposeA;
-//		printMatrix(matrixA,"matrixA");
-//		printMatrix(transposeA,"transposeA");
+		else
+		{
+			Eigen::Matrix<double,7,Eigen::Dynamic> transposeA = matrixA.transpose();
+			pinvA = (transposeA * matrixA).inverse()*transposeA;
+		}
+
+#ifdef MY_DEBUG
+		cout << "MatrixA" << endl << matrixA << endl << endl << "PinvA:" << endl;
+		cout << pinvA << endl;
+		ofstream sqare("transposeAmatrixA.txt");
+		sqare << (transposeA * matrixA) << endl << endl;
+		sqare << (transposeA * matrixA).inverse() << endl;
+		sqare.close();
+#endif // MY_DEBUG
+
 		Eigen::Matrix<double,1,Eigen::Dynamic> s = pinvA.row(0);
 		Eigen::Matrix<double,1,Eigen::Dynamic> h1 = pinvA.row(1);
 		Eigen::Matrix<double,1,Eigen::Dynamic> h2 = pinvA.row(2);
@@ -108,31 +147,102 @@ LaplacianOperator::LaplacianOperator( ObjEntity* mesh ):mState(STATE_CHOOSING_ST
 			}
 		}		
 	}
-	printMatrix(laplacianOperator3D,"laplacianOperator3D");
-// 	int mMeshVertexCount_X3 = 3*mMeshVertexCount;
-// 	A_prime.resize(mMeshVertexCount_X3*2,mMeshVertexCount_X3);
-// 	A_prime.setZero();
-// 	A_prime.topRows(mMeshVertexCount_X3) = laplacianOperator3D;
-// 	int offset = 0;
-// 	for(int j = 0; j < mMeshVertexCount_X3; j+=3)
-// 	{
-// 		A_prime(mMeshVertexCount_X3+j,offset) = 1;
-// 		A_prime(mMeshVertexCount_X3+j+1,offset+mMeshVertexCount) = 1;
-// 		A_prime(mMeshVertexCount_X3+j+2,offset+2*mMeshVertexCount) = 1;
-// 		offset++;
-// 	}
-// 	Eigen::VectorXd b(mMeshVertexCount_X3*2);
-// 	b.setZero();
-// 	for (int j = 0; j < mMeshVertexCount; j++)
-// 	{
-// 		b(mMeshVertexCount_X3+3*j) = meshVertex->at(j)->x;
-// 		b(mMeshVertexCount_X3+3*j+1) = meshVertex->at(j)->y;
-// 		b(mMeshVertexCount_X3+3*j+2) = meshVertex->at(j)->z;
-// 	}					
-// 	b(mMeshVertexCount_X3)  = -21.7391;
-// 	b(mMeshVertexCount_X3+1) = 68.7324;
-// 	b(mMeshVertexCount_X3+2) = 58.9529;	
-// 	Eigen::VectorXd v_p = A_prime.householderQr().solve(b);
+#ifdef MY_DEBUG
+	ofstream outL3d("laplacianOperator3D.txt");
+	outL3d << laplacianOperator3D << endl;
+	outL3d.close();
+#endif
+
+
+	int mMeshVertexCount_X3 = 3*mMeshVertexCount;
+	Eigen::SparseMatrix<double>& A_prime = laplacianOperator3D;	
+//	printMatrix(laplacianOperator3D,"laplacianOperator3D");
+//	printMatrix(A_prime,"A_prime");
+
+	int offset = 0;
+	for(int j = 0; j < mMeshVertexCount_X3; j+=3)
+	{
+		A_prime.insert(mMeshVertexCount_X3+j,offset) = 1;
+		A_prime.insert(mMeshVertexCount_X3+j+1,offset+mMeshVertexCount) = 1;
+		A_prime.insert(mMeshVertexCount_X3+j+2,offset+2*mMeshVertexCount) = 1;
+		offset++;
+	}
+ 	Eigen::VectorXd b(mMeshVertexCount_X3*2);
+ 	b.setZero();
+	int ret;
+	defoMesh = ObjUtility::createObjEntity("defo.obj",ret);
+	vector<Vertex*>* defoVertex = defoMesh->m_vertexList;
+	int defoSize = defoVertex->size();
+	int nodefoSize = mMeshVertexCount;
+ 	for (int j = 0; j < mMeshVertexCount; j++)
+ 	{
+ 		b(mMeshVertexCount_X3+3*j) = defoVertex->at(j)->x;
+ 		b(mMeshVertexCount_X3+3*j+1) = defoVertex->at(j)->y;
+ 		b(mMeshVertexCount_X3+3*j+2) = defoVertex->at(j)->z;
+ 	}					
+
+	A_prime.makeCompressed();
+
+
+	Eigen::SparseMatrix<double> A_prime_T = Eigen::SparseMatrix<double>(A_prime.transpose());
+
+	Eigen::VectorXd A_prime_T_b = A_prime_T*b;
+
+	Eigen::SparseMatrix<double> sym = A_prime_T*A_prime;
+
+	long t = (clock()-clock_start);
+	printf("constructTime:%d\n",t);
+#ifdef MY_DEBUG
+	ofstream outSym("sym.txt");
+	outSym << sym << endl;
+	outSym.close();
+	ofstream outAprimeT("AprimeT.txt");
+	outAprimeT << A_prime_T << endl;
+	outAprimeT.close();
+	ofstream outAprime("A_prime.txt");
+	outAprime << A_prime << endl;
+	outAprime.close();
+#endif	
+#ifdef MY_DEBUG
+	Eigen::EigenSolver<Eigen::MatrixXd > es(sym);
+	ofstream outEigen("eigenvalues.txt",ios::app);
+	outEigen << es.eigenvalues() << endl;
+	outEigen.close();
+#endif // MY_DEBUG
+	
+	clock_start = clock();
+	//Eigen::SimplicialLLT<Eigen::SparseMatrix<double> > solver;
+	Eigen::SimplicialLDLT<Eigen::SparseMatrix<double> > solver;
+	solver.compute(sym);
+	
+	t = (clock()-clock_start);
+	printf("factorizationTime:%d\n",t);
+
+	clock_start = clock();
+// 	ofstream outLU("LU.txt",ios::app);
+// 	outLU << "L:" << endl;
+// 	outLU << solver.matrixL() << endl;
+// 	outLU << "------------------------------------------------------------------" << endl;
+// 	outLU << "U:" << endl;
+// 	outLU << solver.matrixU() << endl;
+// 	outLU.close();	
+	if(solver.info()!= Eigen::Success) {
+		// decomposition failed
+		return;
+	}
+	Eigen::VectorXd v_p = solver.solve(A_prime_T_b);
+
+	t = (clock()-clock_start);
+	printf("SolveTime:%d\n",t);
+	//printMatrix(v_p,"v_p");
+	writeToDisk(v_p);
+
+ 	if(solver.info()!= Eigen::Success) {
+		// solving failed
+		return;
+	}
+//	Eigen::VectorXd v_p = A_prime.householderQr().solve(b);
+
 // 	//Eigen::VectorXd v_p = A_prime.jacobiSvd().solve(b);
 // 	
 // 
@@ -141,8 +251,7 @@ LaplacianOperator::LaplacianOperator( ObjEntity* mesh ):mState(STATE_CHOOSING_ST
 // 	printMatrix(adjacentMatrix,"adjacentMatrix");
 // 	printMatrix(b,"b");
 // 	printMatrix(v_p,"v_p");	
-// 	
-	
+// 		
 	//cout << laplacianOperator;
 }
 
@@ -178,7 +287,7 @@ void LaplacianOperator::initAdjacentMatrix()
 			int verIndex = face->v.at(j)-1;
 			int adj = (j+1)%faceVertexCount;
 			//tripletList.push_back(T(verIndex,face->v.at(adj)-1,1));
-			Eigen::SparseMatrix<double,Eigen::RowMajor,int>::Scalar val = adjacentMatrix.coeff(verIndex,face->v.at(adj)-1);			
+			Eigen::SparseMatrix<double>::Scalar val = adjacentMatrix.coeff(verIndex,face->v.at(adj)-1);			
 			if(fabs(val-1) > 0.001f)
 			{
 				adjacentMatrix.insert(verIndex,face->v.at(adj)-1) = 1;
@@ -212,9 +321,10 @@ void LaplacianOperator::constructMatrix( const Vertex* v, Eigen::Matrix<double,3
 
 void LaplacianOperator::getAdjVertex( int v, vector<int>& adj )
 {
-	for (Eigen::SparseMatrix<double,Eigen::RowMajor>::InnerIterator it(adjacentMatrix,v); it; it++)
+	for (Eigen::SparseMatrix<double>::InnerIterator it(adjacentMatrix,v); it; it++)
 	{
-		adj.push_back(it.col());
+		if(it.row() != v)
+			adj.push_back(it.row());
 	}
 	/*for (int i = 0; i < mMeshVertexCount; i++)
 	{
@@ -240,21 +350,47 @@ void LaplacianOperator::mouseDrag( int button, int x, int y )
 	throw std::exception("The method or operation is not implemented.");
 }
 
-void LaplacianOperator::computeLaplacianOperator( Eigen::SparseMatrix<double,Eigen::RowMajor>& laplacianOperator )
+void LaplacianOperator::computeLaplacianOperator( Eigen::SparseMatrix<double>& laplacianOperator )
 {
 	laplacianOperator.resize(mMeshVertexCount,mMeshVertexCount);
 	laplacianOperator.reserve(Eigen::VectorXi::Constant(mMeshVertexCount,10));
 	for (int i = 0; i < mMeshVertexCount; i++)
 	{
-		laplacianOperator.insert(i,i) = 1;
-		for (Eigen::SparseMatrix<double,Eigen::RowMajor>::InnerIterator it(adjacentMatrix,i); it; it++)
+		/* 如果第i个点没有邻接点，即它是一个孤立的点，那么它的laplacian坐标为0 */
+		if( adjacentMatrix.innerVector(i).nonZeros() == 0)
 		{
-			laplacianOperator.insert(i,it.col()) = -1/degreeMatrix(i);
+			laplacianOperator.insert(i,i) = 0;
+			continue;
+		}
+		laplacianOperator.insert(i,i) = 1;
 #ifdef MY_DEBUG
-			if(it.col() >= 10)
-				printf("InnerVector size should expand! CurrentMax:%d.\n",it.col());
+		int adjCount = 0;
+#endif		
+		for (Eigen::SparseMatrix<double>::InnerIterator it(adjacentMatrix,i); it; it++)
+		{
+			if(i != it.row())
+			{
+				laplacianOperator.insert(i,it.row()) = -1/degreeMatrix(i);				
+#ifdef MY_DEBUG
+			adjCount++;
+			if(adjCount >= 10)
+				printf("InnerVector size should expand! CurrentMax:%d.\n",adjCount);
 #endif
+			}
 		}
 	}
+}
+
+void LaplacianOperator::writeToDisk( Eigen::VectorXd& v_p )
+{
+	ofstream out("SimplicialLDLT_v_p.txt",ios::app);
+	int rows = v_p.rows();
+	int verCount = rows/3;
+	int verCountX2 = verCount*2;
+	for (int i = 0; i < verCount; i++)
+	{
+		out << "v " << v_p(i) << ' ' << v_p(i+verCount) << ' ' << v_p(i+verCountX2) << endl;
+	}
+	out.close();
 }
 
