@@ -58,7 +58,6 @@ private:
 	MeshDrawerImpl* mMeshDrawer;
 
 	MeshProcessor* mMeshProcessor;
-
 };
 
 #endif

@@ -21,6 +21,8 @@ public:
 	static double pointDistance(Vector2D p1, Vector2D p2);
 
 	static double modelViewMatrix[16];
+
+	static Vector2D getScreenSize();
 private:
 
 };

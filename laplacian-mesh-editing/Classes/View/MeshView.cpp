@@ -4,6 +4,7 @@
 #include <math.h>
 #include "ObjUtility.h"
 #include "HalfEdgeEntity.h"
+#include "LaplacianOperator.h"
 #include <fstream>
 void print(double m[16],ofstream& o)
 {
@@ -41,16 +42,17 @@ void MeshView::draw()
 	if(mMesh == NULL)
 	{
 		int ret;
-		ObjEntity* mesh = ObjUtility::createObjEntity("result.obj",ret);
+		ObjEntity* mesh = ObjUtility::createObjEntity("q2.obj",ret);
 		Size3D size = mesh->getSize();
 		double m = max(max(size.x,size.y),max(size.x,size.z));
 		mScale = 15.0/m;
 		//HalfEdgeEntity* halfEdgeMesh = new HalfEdgeEntity(mesh);
-		this->setMesh(mesh);
-		ObjDrawerPrimitive *drawer = new ObjDrawerPrimitive(mMesh);
+		this->setMesh(mesh);		
+		ObjDrawerPrimitive *drawer = new ObjDrawerPrimitive(mMesh,this);
 		drawer->setPointColor(Color3f(1.0f,0,0));
-		drawer->setPointSize(2.0f);
+		drawer->setPointSize(5.0f);
 		mMeshDrawer = drawer;
+		mMeshProcessor = new MeshProcessor(new LaplacianOperator(mesh,drawer));
 	}
 
     if (!valid()) {
@@ -127,7 +129,7 @@ int MeshView::handle( int event )
 				//((HalfEdgeEntity*)mMesh)->handleMousePoint(Vector2D(Fl::event_x(),this->h()-Fl::event_y()));
 				//redraw();
 			}
-			if(mMeshProcessor)
+			if(mMeshProcessor && mDragType == DRAG_EDIT)
 				mMeshProcessor->mouseRelease(Fl::event_button(),Fl::event_x(),this->h()-Fl::event_y());
 			break;
 		case FL_PUSH:
@@ -136,7 +138,7 @@ int MeshView::handle( int event )
 			//glGetDoublev(GL_MODELVIEW_MATRIX,m);
 			startMouseX = Fl::event_x()-this->w()/2;
 			startMouseY = this->h()/2-Fl::event_y();
-			if(mMeshProcessor)
+			if(mMeshProcessor && mDragType == DRAG_EDIT)
 				mMeshProcessor->mousePush(Fl::event_button(),Fl::event_x(),this->h()-Fl::event_y());
 			break;
 		case FL_DRAG:

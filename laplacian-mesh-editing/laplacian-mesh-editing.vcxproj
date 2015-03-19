@@ -45,7 +45,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>Classes\Data;Classes\Entity;Classes\Tool;Classes\View;Classes\MeshOperator;Classes</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>WIN32;MY_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <MinimalRebuild>false</MinimalRebuild>
     </ClCompile>
@@ -84,6 +84,7 @@
     <ClCompile Include="Classes\entry.cpp" />
     <ClCompile Include="Classes\MeshOperator\LaplacianOperator.cpp" />
     <ClCompile Include="Classes\MeshOperator\OperatorImpl.cpp" />
+    <ClCompile Include="Classes\MeshOperator\VerticesController.cpp" />
     <ClCompile Include="Classes\MeshProcessor.cpp" />
     <ClCompile Include="Classes\Tool\ObjUtility.cpp" />
     <ClCompile Include="Classes\Data\Vector3D.cpp" />
@@ -362,6 +363,7 @@
     <ClInclude Include="Classes\Entity\ObjEntity.h" />
     <ClInclude Include="Classes\MeshOperator\LaplacianOperator.h" />
     <ClInclude Include="Classes\MeshOperator\OperatorImpl.h" />
+    <ClInclude Include="Classes\MeshOperator\VerticesController.h" />
     <ClInclude Include="Classes\MeshProcessor.h" />
     <ClInclude Include="Classes\Tool\ObjUtility.h" />
     <ClInclude Include="Classes\Data\Vector3D.h" />

@@ -8,7 +8,6 @@
 #include "ObjUtility.h"
 typedef Eigen::Triplet<double> T;
 #define PRINT 1
-#undef MY_DEBUG
 void printLine(ofstream& outPut)
 {
 	outPut << "-----------------------------------------------------------------------" << endl;	
@@ -27,17 +26,20 @@ LaplacianOperator::LaplacianOperator():mState(STATE_CHOOSING_STATIC)
 {
 }
 
-LaplacianOperator::LaplacianOperator( ObjEntity* mesh ):mState(STATE_CHOOSING_STATIC),OperatorImpl(mesh)
+LaplacianOperator::LaplacianOperator( ObjEntity* mesh,MeshDrawerImpl* drawer ):mState(STATE_CHOOSING_STATIC),OperatorImpl(mesh,drawer)
 {	
+	mVerticesController = new VerticesController(mesh,drawer);
+
 	assert(mesh != nullptr);
 	clock_t clock_start;
 	clock_start = clock();
-	mMeshVertexCount = mesh->getVertexCount();	
+	mMeshVertexCount = mesh->getVertexCount();
 	initAdjacentMatrix();	
 //	printMatrix(adjacentMatrix,"adjacentMatrix");
 //	printMatrix(degreeMatrix,"degreeMatrix");
 
 	Eigen::SparseMatrix<double> laplacianOperator;
+	
 	computeLaplacianOperator(laplacianOperator);
 #ifdef MY_DEBUG
 	ofstream out("debug.txt",ios::app);
@@ -86,6 +88,7 @@ LaplacianOperator::LaplacianOperator( ObjEntity* mesh ):mState(STATE_CHOOSING_ST
 		}
 
 		Eigen::Matrix<double,Eigen::Dynamic,7> matrixA;
+		
 		matrixA.resize(vertexInA.size()*3,7);
 		for (int j = 0; j < vertexInA.size(); j++)
 		{		
@@ -337,17 +340,43 @@ void LaplacianOperator::getAdjVertex( int v, vector<int>& adj )
 
 void LaplacianOperator::mousePush( int button, int x, int y )
 {
-	throw std::exception("The method or operation is not implemented.");
+	mVerticesController->mousePush(button,x,y);
 }
 
 void LaplacianOperator::mouseRelease( int button, int x, int y )
 {
-	throw std::exception("The method or operation is not implemented.");
+	mVerticesController->mouseRelease(button,x,y);
+	auto sv = mVerticesController->getSelectedVertices();
+	auto svEndAfterRemove = std::remove_if(sv.begin(),sv.end(),[this](unsigned int svX){
+		for(auto it = mSelectedVertices.begin(); it != mSelectedVertices.end(); it++)
+		{
+			if(svX == *it)
+			{
+				auto msEndAfterRemove = std::remove_if(mSelectedVertices.begin(), mSelectedVertices.end(),[=](unsigned int mSx){
+					if(mSx == svX)
+						return true;
+					return false;
+				});
+				mSelectedVertices.erase(msEndAfterRemove,mSelectedVertices.end());
+				return true;
+			}
+		}
+		return false;
+	});
+	sv.erase(svEndAfterRemove,sv.end());
+
+	for_each(sv.begin(),sv.end(),[this](unsigned int svX){mSelectedVertices.push_back(svX);});
+
+	((ObjDrawerPrimitive*)mDrawer)->clearVerticesColor();
+	std::for_each(mSelectedVertices.begin(), mSelectedVertices.end(), [this](unsigned int index){
+		((ObjDrawerPrimitive*)mDrawer)->setVertexColorWithIndex(index,Color3f(0,1.0f,0));
+	});
+	((ObjDrawerPrimitive*)mDrawer)->postRedraw();
 }
 
 void LaplacianOperator::mouseDrag( int button, int x, int y )
 {
-	throw std::exception("The method or operation is not implemented.");
+	mVerticesController->mouseDrag(button,x,y);
 }
 
 void LaplacianOperator::computeLaplacianOperator( Eigen::SparseMatrix<double>& laplacianOperator )

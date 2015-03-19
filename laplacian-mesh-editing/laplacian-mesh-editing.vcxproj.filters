@@ -81,6 +81,9 @@
     <ClCompile Include="Classes\View\ObjDrawerPrimitive.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Classes\MeshOperator\VerticesController.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Classes\Tool\Camera.h">
@@ -909,6 +912,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Classes\View\ObjDrawerPrimitive.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Classes\MeshOperator\VerticesController.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

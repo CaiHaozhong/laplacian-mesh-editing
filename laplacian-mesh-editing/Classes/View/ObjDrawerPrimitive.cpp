@@ -3,17 +3,13 @@
 ObjDrawerPrimitive::ObjDrawerPrimitive()
 {
 	mPointSize = 1.0f;
-	mPointColor[0] = 1.0f;
-	mPointColor[1] = 1.0f;
-	mPointColor[2] = 1.0f;
+	mPointColor = Color3f(1.0f,1.0f,1.0f);
 }
 
-ObjDrawerPrimitive::ObjDrawerPrimitive( EntityImpl* mesh ) :MeshDrawerImpl(mesh)
+ObjDrawerPrimitive::ObjDrawerPrimitive( EntityImpl* mesh, Fl_Gl_Window* context ) :MeshDrawerImpl(mesh,context)
 {
 	mPointSize = 1.0f;
-	mPointColor[0] = 1.0f;
-	mPointColor[1] = 1.0f;
-	mPointColor[2] = 1.0f;
+	mPointColor = Color3f(1.0f,1.0f,1.0f);
 }
 
 void ObjDrawerPrimitive::drawMesh()
@@ -43,16 +39,23 @@ void ObjDrawerPrimitive::drawMesh()
 void ObjDrawerPrimitive::drawVertexes( std::vector<Vertex*>* vertexContainer )
 {
 	float pointSizeBackUp;
-	float colorBackUp[4];		
-	glGetFloatv(GL_POINT_SIZE,&pointSizeBackUp);
-	glGetFloatv(GL_CURRENT_COLOR,colorBackUp);
+	
+	glGetFloatv(GL_POINT_SIZE,&pointSizeBackUp);	
 	glPointSize(mPointSize);
-	glColor3fv(mPointColor);
+	float colorBackUp[4];
+	glGetFloatv(GL_CURRENT_COLOR,colorBackUp);
 	glBegin(GL_POINTS);
+	int vertexColorArrayIndex = 0;
 	for (int i = 0; i < vertexContainer->size(); i++)
 	{
 		Vertex* ver = vertexContainer->at(i);
-		glVertex3d(ver->x,ver->y,ver->z);
+		if(vertexColor.size() > vertexColorArrayIndex && i == vertexColor.at(vertexColorArrayIndex).index)
+		{
+			drawVertexWithColor(ver,vertexColor.at(vertexColorArrayIndex).color);
+			vertexColorArrayIndex++;
+		}
+		else
+			drawVertexWithColor(ver,mPointColor);
 	}
 	glEnd();
 	glPointSize(pointSizeBackUp);
@@ -66,8 +69,23 @@ void ObjDrawerPrimitive::setPointSize( float size )
 
 void ObjDrawerPrimitive::setPointColor( Color3f color )
 {
-	mPointColor[0] = color.x;
-	mPointColor[1] = color.y;
-	mPointColor[2] = color.z;
+	mPointColor = color;
+}
+
+void ObjDrawerPrimitive::setVertexColorWithIndex( int index, const Color3f& c)
+{
+	vertexColor.push_back(_VertexColor(index,c));
+	std::sort(vertexColor.begin(),vertexColor.end());	
+}
+
+void ObjDrawerPrimitive::drawVertexWithColor( Vertex* ver, Color3f c )
+{
+	glColor3f(c.x,c.y,c.z);
+	glVertex3d(ver->x,ver->y,ver->z);
+}
+
+void ObjDrawerPrimitive::clearVerticesColor()
+{
+	vertexColor.clear();
 }
 

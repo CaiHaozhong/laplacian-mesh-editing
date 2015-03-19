@@ -1,4 +1,5 @@
 #pragma once
+#include "VerticesController.h"
 #include "OperatorImpl.h"
 #include "ObjEntity.h"
 #include "Eigen/Dense"
@@ -12,7 +13,7 @@ public:
 
 	static const int FUNC_MOVE_HANDLE = 0X04;
 
-	LaplacianOperator(ObjEntity* mesh);
+	LaplacianOperator(ObjEntity* mesh, MeshDrawerImpl* drawer);
 
 	LaplacianOperator();
 	~LaplacianOperator();
@@ -55,4 +56,9 @@ private:
 	ObjEntity* defoMesh;
 
 	void writeToDisk(Eigen::VectorXd& v_p);
+
+private:
+	VerticesController* mVerticesController;
+
+	std::vector<unsigned int> mSelectedVertices;
 };

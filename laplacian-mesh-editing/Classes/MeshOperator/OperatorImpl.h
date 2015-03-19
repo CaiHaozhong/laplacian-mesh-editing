@@ -1,9 +1,10 @@
 #pragma once
 #include "EntityImpl.h"
+#include "MeshDrawerImpl.h"
 class OperatorImpl
 {
 public:
-	OperatorImpl(EntityImpl* mesh):mMesh(mesh){};
+	OperatorImpl(EntityImpl* mesh, MeshDrawerImpl* drawer):mMesh(mesh),mDrawer(drawer){};
 	OperatorImpl();
 	~OperatorImpl();
 	
@@ -22,5 +23,5 @@ public:
 
 protected:
 	EntityImpl* mMesh;
-	
+	MeshDrawerImpl* mDrawer;
 };
