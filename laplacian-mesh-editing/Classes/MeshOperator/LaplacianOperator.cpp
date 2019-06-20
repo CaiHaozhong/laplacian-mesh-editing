@@ -128,7 +128,7 @@ LaplacianOperator::LaplacianOperator( ObjEntity* mesh,MeshDrawerImpl* drawer ):m
 
 		Eigen::Matrix<double,1,Eigen::Dynamic> TDeltaX = s*deltaInput(i,0)-h3*deltaInput(i,1)+h2*deltaInput(i,2);
 		Eigen::Matrix<double,1,Eigen::Dynamic> TDeltaY = h3*deltaInput(i,0)+s*deltaInput(i,1)-h1*deltaInput(i,2);
-		Eigen::Matrix<double,1,Eigen::Dynamic> TDeltaZ = -h2*deltaInput(i,0)-h1*deltaInput(i,1)+s*deltaInput(i,2);
+		Eigen::Matrix<double,1,Eigen::Dynamic> TDeltaZ = -h2*deltaInput(i,0)+h1*deltaInput(i,1)+s*deltaInput(i,2);
 
 		Eigen::Matrix<double,3,Eigen::Dynamic> TDelta;
 		TDelta.resize(3,TDeltaX.cols());
